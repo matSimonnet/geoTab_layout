@@ -10,13 +10,15 @@ import fr.irit.geotablet_interactions.common.MyMapView;
 import fr.irit.geotablet_interactions.common.MyTTS;
 
 public class MainActivity extends Activity {
+	
+	public MyMapView mapView;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 
-		MyMapView mapView = (MyMapView) findViewById(R.id.map_view);
+		mapView = (MyMapView) findViewById(R.id.map_view);
 
 		// Set listener to the map view
 		mapView.setOnTouchListener(new MapViewTouchListener(this));

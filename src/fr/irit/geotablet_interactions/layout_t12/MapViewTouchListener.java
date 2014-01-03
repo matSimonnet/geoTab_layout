@@ -1,5 +1,12 @@
 package fr.irit.geotablet_interactions.layout_t12;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 import java.util.Set;
 
 import org.osmdroid.util.BoundingBoxE6;
@@ -8,6 +15,7 @@ import org.osmdroid.views.MapView;
 import org.osmdroid.views.MapView.Projection;
 
 import android.content.Context;
+import android.os.Environment;
 import android.os.Vibrator;
 import android.speech.tts.TextToSpeech;
 import android.support.v4.view.MotionEventCompat;
@@ -40,6 +48,14 @@ public class MapViewTouchListener implements OnTouchListener {
 	private String currentPoint;
 	private String lastPoint;
 
+	//for logging
+	private PrintWriter output;
+	private Date myDate;
+	private boolean firstTouch = true;
+	private String logContact = "";
+	private String logAnnounce = "";
+	private String logArea = "";
+	
 	/**
 	 * Constructor
 	 * 
@@ -51,6 +67,18 @@ public class MapViewTouchListener implements OnTouchListener {
 		this.context = context;
 		this.lastArea = -1;
 		this.lastPoint = "nothing";
+		
+		 myDate = new Date();
+		 SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyyMMdd-HHmmss",Locale.getDefault()); 
+		 new File(Environment.getExternalStorageDirectory().getAbsolutePath()+ "/geoTablet/").mkdir();
+		 String logFilename = simpleDateFormat.format(new Date())+ "_layout" +".csv";
+		 File logFile = new File(Environment.getExternalStorageDirectory().getAbsolutePath()+ "/geoTablet/" + logFilename);
+		     try {
+		       output = new PrintWriter(new FileWriter(logFile));
+		     } catch (IOException e) {
+		       e.printStackTrace();
+		     }
+		
 	}
 
 	@Override
@@ -168,7 +196,7 @@ public class MapViewTouchListener implements OnTouchListener {
 				Set<OsmNode> nodesInBbox = ((MyMapView) v).getNodesInBbox(bbox);
 				
 				//Hélène's code to announce area and then the name of the touched point
-				/*if (lastArea != area) {
+				if (lastArea != area) {
 					if (MyTTS.getInstance(context).speak(
 							area + ": "
 							+ nodesInBbox.size()
@@ -176,6 +204,7 @@ public class MapViewTouchListener implements OnTouchListener {
 							TextToSpeech.QUEUE_FLUSH, 
 							null) == TextToSpeech.SUCCESS) {
 						lastArea = area;
+						logArea = ""+ area;
 					}
 				} else {
 					for (OsmNode n : nodesInBbox) {
@@ -186,32 +215,41 @@ public class MapViewTouchListener implements OnTouchListener {
 							if (!MyTTS.getInstance(context).isSpeaking()) {
 								// Vibrate when touching a node
 								((Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE)).vibrate(150);
-								MyTTS.getInstance(context).speak(n.getName(), TextToSpeech.QUEUE_ADD, null);
+								MyTTS.getInstance(context).speak(n.getName(), TextToSpeech.QUEUE_FLUSH, null);
+								logAnnounce = n.getName();
+								Log.e("logAnnounce", logAnnounce);								
 							}
+							logContact = n.getName();
+							Log.e("logContact", logContact);
 						}
 					}
-				}*/
+				}
 				
 				
 				//Mathieu's modification
-				Log.v(currentPoint,lastPoint);
+				/*Log.v(currentPoint,lastPoint);
 				//if (lastPoint !=  currentPoint) {
 					for (OsmNode n : nodesInBbox) {
 						if ((n.toPoint((MapView) v).y <= y + TARGET_SIZE / 2)
 								&& (n.toPoint((MapView) v).y >= y - TARGET_SIZE / 2)
 								&& (n.toPoint((MapView) v).x <= x + TARGET_SIZE / 2)
 								&& (n.toPoint((MapView) v).x >= x - TARGET_SIZE / 2) 
-								&& (lastPoint !=  currentPoint)){
+								//&& (lastPoint !=  currentPoint)
+								){
 								currentPoint = n.getName();
 								// Vibrate when touching a node
-								if (currentPoint != lastPoint){
+								//if (currentPoint != lastPoint){
 									MyTTS.getInstance(context).stop();
 									((Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE)).vibrate(150);
 									MyTTS.getInstance(context).speak(n.getName(), TextToSpeech.QUEUE_ADD, null);
 									lastPoint = n.getName();
-								}
+									logAnnounce = n.getName();
+									Log.e("logAnnounce", logAnnounce);
+								//}
 							}
-							else lastPoint = "nothing";
+							//else lastPoint = "nothing";
+						logContact = n.getName();
+						Log.e("logContact", logContact);
 						}
 					//}
 				//
@@ -225,13 +263,17 @@ public class MapViewTouchListener implements OnTouchListener {
 							null) == TextToSpeech.SUCCESS) {
 						lastArea = area;
 					} 
-				}
-				
-				
-				
-				
+				}*/
 			}
 
+			//for logging
+			double lat = ((MainActivity) context).mapView.getProjection().fromPixels(x, y).getLatitudeE6();
+			double lon = ((MainActivity) context).mapView.getProjection().fromPixels(x, y).getLongitudeE6();
+			Datalogger(x,y,lat,lon,logContact,logAnnounce, logArea);
+			logAnnounce = "";
+			logContact = "";
+			logArea = "";
+			
 			break;
 		}
 
@@ -264,4 +306,18 @@ public class MapViewTouchListener implements OnTouchListener {
 		return true;
 	}
 
+	public void Datalogger (float x, float y, double lat, double lon, String logContact, String logAnnounce, String logArea){
+	    if (firstTouch){
+	    output.println("time(ms);x;y;lat;lon;contact;announce;area");
+	    firstTouch = false;
+	    }
+	    Date touchDate = new Date();
+	    String str = touchDate.getTime()-myDate.getTime() + ";" 
+	    + (int)x + ";" + (int)y + ";" 
+	    + lat/100000 + ";" + lon/100000 + ";"
+	    + logContact + ";" + logAnnounce+ ";" + logArea;
+	    output.println(str);
+	    output.flush();
+	  }
+	
 }
