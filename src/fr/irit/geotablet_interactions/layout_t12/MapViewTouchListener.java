@@ -19,7 +19,6 @@ import android.os.Environment;
 import android.os.Vibrator;
 import android.speech.tts.TextToSpeech;
 import android.support.v4.view.MotionEventCompat;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnTouchListener;
@@ -45,8 +44,8 @@ public class MapViewTouchListener implements OnTouchListener {
 	private Context context;
 	private int activePointerId;
 	private int lastArea;
-	private String currentPoint;
-	private String lastPoint;
+	//private String currentPoint; //for old Mathieu modification code
+	//private String lastPoint;
 
 	//for logging
 	private PrintWriter output;
@@ -66,19 +65,18 @@ public class MapViewTouchListener implements OnTouchListener {
 		super();
 		this.context = context;
 		this.lastArea = -1;
-		this.lastPoint = "nothing";
-		
-		 myDate = new Date();
-		 SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyyMMdd-HHmmss",Locale.getDefault()); 
-		 new File(Environment.getExternalStorageDirectory().getAbsolutePath()+ "/geoTablet/").mkdir();
-		 String logFilename = simpleDateFormat.format(new Date())+ "_layout" +".csv";
-		 File logFile = new File(Environment.getExternalStorageDirectory().getAbsolutePath()+ "/geoTablet/" + logFilename);
-		     try {
-		       output = new PrintWriter(new FileWriter(logFile));
-		     } catch (IOException e) {
-		       e.printStackTrace();
-		     }
-		
+		//this.lastPoint = "nothing"; //for old Mathieu modification code
+		// for logging
+		myDate = new Date();
+		SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyyMMdd-HHmmss",Locale.getDefault()); 
+		new File(Environment.getExternalStorageDirectory().getAbsolutePath()+ "/geoTablet/").mkdir();
+		String logFilename = simpleDateFormat.format(new Date())+ "_layout" +".csv";
+		File logFile = new File(Environment.getExternalStorageDirectory().getAbsolutePath()+ "/geoTablet/" + logFilename);
+		    try {
+		      output = new PrintWriter(new FileWriter(logFile));
+		    } catch (IOException e) {
+		      e.printStackTrace();
+		    }
 	}
 
 	@Override
@@ -86,6 +84,7 @@ public class MapViewTouchListener implements OnTouchListener {
 		int action = MotionEventCompat.getActionMasked(ev);
 
 		switch (action) {
+		
 		case MotionEvent.ACTION_DOWN: {
 			// Save the ID of this pointer (for dragging)
 			activePointerId = MotionEventCompat.getPointerId(ev, 0);
@@ -95,10 +94,8 @@ public class MapViewTouchListener implements OnTouchListener {
 		case MotionEvent.ACTION_MOVE: {
 			// Find the index of the active pointer and fetch its position
 			int pointerIndex = MotionEventCompat.findPointerIndex(ev, activePointerId);
-
 			float y = MotionEventCompat.getY(ev, pointerIndex);
 			float x = MotionEventCompat.getX(ev, pointerIndex);
-
 			// Vibrate when crossing a bound
 			if ((y <= BOUND_WIDTH) // Screen edges (bottom)
 					|| (y >= v.getHeight() - BOUND_WIDTH) // Screen edges (top)
@@ -111,7 +108,6 @@ public class MapViewTouchListener implements OnTouchListener {
 					|| ((x <= 2 * v.getWidth() / 3 + BOUND_WIDTH) && (x >= 2 * v.getWidth() / 3 - BOUND_WIDTH))) {
 				((Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE)).vibrate(150);
 			}
-
 			// Look for the touched area
 			Projection projection = ((MapView) v).getProjection();
 			GeoPoint gpTopLeft = null;
@@ -185,7 +181,6 @@ public class MapViewTouchListener implements OnTouchListener {
 					area = 12;
 				}
 			}
-
 			if ((area > 0) && (area <= 12)) { // If the area is valid
 				// Get nodes in the touched area and speak
 				BoundingBoxE6 bbox = new BoundingBoxE6(
@@ -193,8 +188,7 @@ public class MapViewTouchListener implements OnTouchListener {
 						gpBottomRight.getLongitudeE6(),
 						gpBottomRight.getLatitudeE6(),
 						gpTopLeft.getLongitudeE6());
-				Set<OsmNode> nodesInBbox = ((MyMapView) v).getNodesInBbox(bbox);
-				
+				Set<OsmNode> nodesInBbox = ((MyMapView) v).getNodesInBbox(bbox);			
 				//Hélène's code to announce area and then the name of the touched point
 				if (lastArea != area) {
 					if (MyTTS.getInstance(context).speak(
@@ -216,54 +210,12 @@ public class MapViewTouchListener implements OnTouchListener {
 								// Vibrate when touching a node
 								((Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE)).vibrate(150);
 								MyTTS.getInstance(context).speak(n.getName(), TextToSpeech.QUEUE_FLUSH, null);
-								logAnnounce = n.getName();
-								Log.e("logAnnounce", logAnnounce);								
+								logAnnounce = n.getName();								
 							}
 							logContact = n.getName();
-							Log.e("logContact", logContact);
 						}
 					}
 				}
-				
-				
-				//Mathieu's modification
-				/*Log.v(currentPoint,lastPoint);
-				//if (lastPoint !=  currentPoint) {
-					for (OsmNode n : nodesInBbox) {
-						if ((n.toPoint((MapView) v).y <= y + TARGET_SIZE / 2)
-								&& (n.toPoint((MapView) v).y >= y - TARGET_SIZE / 2)
-								&& (n.toPoint((MapView) v).x <= x + TARGET_SIZE / 2)
-								&& (n.toPoint((MapView) v).x >= x - TARGET_SIZE / 2) 
-								//&& (lastPoint !=  currentPoint)
-								){
-								currentPoint = n.getName();
-								// Vibrate when touching a node
-								//if (currentPoint != lastPoint){
-									MyTTS.getInstance(context).stop();
-									((Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE)).vibrate(150);
-									MyTTS.getInstance(context).speak(n.getName(), TextToSpeech.QUEUE_ADD, null);
-									lastPoint = n.getName();
-									logAnnounce = n.getName();
-									Log.e("logAnnounce", logAnnounce);
-								//}
-							}
-							//else lastPoint = "nothing";
-						logContact = n.getName();
-						Log.e("logContact", logContact);
-						}
-					//}
-				//
-				
-				if (lastArea != area) {
-					if (MyTTS.getInstance(context).speak(
-							area + ": "
-							+ nodesInBbox.size()
-							+ context.getResources().getString(R.string.point_of_interest),
-							TextToSpeech.QUEUE_FLUSH, 
-							null) == TextToSpeech.SUCCESS) {
-						lastArea = area;
-					} 
-				}*/
 			}
 
 			//for logging
@@ -273,6 +225,45 @@ public class MapViewTouchListener implements OnTouchListener {
 			logAnnounce = "";
 			logContact = "";
 			logArea = "";
+			
+			//Old Mathieu's modification
+			/*Log.v(currentPoint,lastPoint);
+			//if (lastPoint !=  currentPoint) {
+				for (OsmNode n : nodesInBbox) {
+					if ((n.toPoint((MapView) v).y <= y + TARGET_SIZE / 2)
+							&& (n.toPoint((MapView) v).y >= y - TARGET_SIZE / 2)
+							&& (n.toPoint((MapView) v).x <= x + TARGET_SIZE / 2)
+							&& (n.toPoint((MapView) v).x >= x - TARGET_SIZE / 2) 
+							//&& (lastPoint !=  currentPoint)
+							){
+							currentPoint = n.getName();
+							// Vibrate when touching a node
+							//if (currentPoint != lastPoint){
+								MyTTS.getInstance(context).stop();
+								((Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE)).vibrate(150);
+								MyTTS.getInstance(context).speak(n.getName(), TextToSpeech.QUEUE_ADD, null);
+								lastPoint = n.getName();
+								logAnnounce = n.getName();
+								Log.e("logAnnounce", logAnnounce);
+							//}
+						}
+						//else lastPoint = "nothing";
+					logContact = n.getName();
+					Log.e("logContact", logContact);
+					}
+				//}
+			//
+			
+			if (lastArea != area) {
+				if (MyTTS.getInstance(context).speak(
+						area + ": "
+						+ nodesInBbox.size()
+						+ context.getResources().getString(R.string.point_of_interest),
+						TextToSpeech.QUEUE_FLUSH, 
+						null) == TextToSpeech.SUCCESS) {
+					lastArea = area;
+				} 
+			}*/
 			
 			break;
 		}
@@ -289,17 +280,14 @@ public class MapViewTouchListener implements OnTouchListener {
 		}
 
 		case MotionEvent.ACTION_POINTER_UP: {
-
 			int pointerIndex = MotionEventCompat.getActionIndex(ev);
 			int pointerId = MotionEventCompat.getPointerId(ev, pointerIndex);
-
 			if (pointerId == activePointerId) {
 				// This was our active pointer going up. Choose a new
 				// active pointer and adjust accordingly.
 				int newPointerIndex = pointerIndex == 0 ? 1 : 0;
 				activePointerId = MotionEventCompat.getPointerId(ev, newPointerIndex);
 			}
-
 			break;
 		}
 		}
@@ -319,5 +307,4 @@ public class MapViewTouchListener implements OnTouchListener {
 	    output.println(str);
 	    output.flush();
 	  }
-	
 }
