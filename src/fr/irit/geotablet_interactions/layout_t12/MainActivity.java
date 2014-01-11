@@ -5,9 +5,10 @@ import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.View;
-import fr.irit.layout_t12.R;
+import android.view.WindowManager;
 import fr.irit.geotablet_interactions.common.MyMapView;
 import fr.irit.geotablet_interactions.common.MyTTS;
+import fr.irit.layout_t12.R;
 
 public class MainActivity extends Activity {
 	
@@ -25,7 +26,7 @@ public class MainActivity extends Activity {
 		//requestWindowFeature(Window.FEATURE_NO_TITLE);
 				
 		//hide menuBar (bottom)
-		//this.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,WindowManager.LayoutParams.FLAG_FULLSCREEN);
+		this.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,WindowManager.LayoutParams.FLAG_FULLSCREEN);
 		getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LOW_PROFILE);
 
 		mapView = (MyMapView) findViewById(R.id.map_view);
