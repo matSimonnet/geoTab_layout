@@ -16,6 +16,7 @@ import org.osmdroid.views.MapView.Projection;
 
 import android.content.Context;
 import android.os.Environment;
+import android.os.Vibrator;
 import android.speech.tts.TextToSpeech;
 import android.support.v4.view.MotionEventCompat;
 import android.view.MotionEvent;
@@ -105,7 +106,7 @@ public class MapViewTouchListener implements OnTouchListener {
 					|| ((y <= 3 * v.getHeight() / 4 + BOUND_WIDTH) && (y >= 3 * v.getHeight() / 4 - BOUND_WIDTH))
 					|| ((x <= v.getWidth() / 3 + BOUND_WIDTH) && (x >= v.getWidth() / 3 - BOUND_WIDTH))
 					|| ((x <= 2 * v.getWidth() / 3 + BOUND_WIDTH) && (x >= 2 * v.getWidth() / 3 - BOUND_WIDTH))) {
-				//((Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE)).vibrate(150);
+				((Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE)).vibrate(300);
 			}
 			// Look for the touched area
 			Projection projection = ((MapView) v).getProjection();
@@ -207,7 +208,7 @@ public class MapViewTouchListener implements OnTouchListener {
 								&& (n.toPoint((MapView) v).x >= x - TARGET_SIZE / 2)) {
 							if (!MyTTS.getInstance(context).isSpeaking()) {
 								// Vibrate when touching a node
-								//((Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE)).vibrate(150);
+								((Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE)).vibrate(150);
 								MyTTS.getInstance(context).speak(n.getName(), TextToSpeech.QUEUE_FLUSH, null);
 								logAnnounce = n.getName();								
 							}
