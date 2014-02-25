@@ -37,7 +37,7 @@ import fr.irit.layout_t12.R;
  */
 public class MapViewTouchListener implements OnTouchListener {
 	private static final int BOUND_WIDTH = 24;
-	private static final int TARGET_SIZE = 96; // Touch target size for on screen elements
+	private static final int TARGET_SIZE = 120; // Touch target size for on screen elements
 
 	private static final int INVALID_POINTER_ID = -1;
 
